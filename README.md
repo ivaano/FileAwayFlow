@@ -19,8 +19,13 @@ to build the API you need to install rust and cargo (https://www.rust-lang.org/t
 cargo build --color=always --profile release --package FileAwayFlow --bin FileAwayFlow
   Finished `release` profile [optimized] target(s) in 2.02s
 ```
+
 The binary should be in the `target/release` directory, copy the binary file to `/usr/local/bin/fileawayflow`
 the api can be run by any user, just make sure the user has the proper permissions to manipulate the files.
+
+Alternatively if you don't want to build it I've provided a binary for linux-x64 as a release asset https://github.com/ivaano/FileAwayFlow/releases.
+Tested only on debian 12, but it should work fine on any x64 linux distro.
+
 
 ### Create a system service to start the API on boot:
 Location:

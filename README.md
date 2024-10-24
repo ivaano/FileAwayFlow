@@ -20,12 +20,14 @@ cargo build --color=always --profile release --package FileAwayFlow --bin FileAw
   Finished `release` profile [optimized] target(s) in 2.02s
 ```
 The binary should be in the `target/release` directory, copy the binary file to `/usr/local/bin/fileawayflow`
+the api can be run by any user, just make sure the user has the proper permissions to manipulate the files.
 
-Create a system service to start the API on boot:
+### Create a system service to start the API on boot:
+Location:
 ```bash
-create a systemd service in debian you can put it on `/etc/systemd/system/fileaway.service`
+> sudoedit /etc/systemd/system/fileaway.service
 ```
-
+Contents:
 ```ini
 [Unit]
 Description=API to move files around.
@@ -47,12 +49,15 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-To start the service on boot:
+To start the service on boot using systemctl:
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable fileaway.service
-sudo systemctl start fileaway 
-sudo systemctl status fileaway
+> sudo systemctl daemon-reload
+> sudo systemctl enable fileaway.service
+> sudo systemctl start fileaway 
+```
+To check service status:
+```bash
+> sudo systemctl status fileaway
 ● fileaway.service - API to move files around
      Loaded: loaded (/etc/systemd/system/fileaway.service; enabled; preset: enabled)
      Active: active (running) since Wed 2024-10-23 15:06:11 PDT; 2s ago
@@ -67,13 +72,19 @@ Oct 23 15:06:11 zenyata systemd[1]: Started fileaway.service - API to move files
 Oct 23 15:06:11 zenyata fileawayflow[647632]: 🚀 Server started successfully, listening on port 8002
 ```
 
-
 ## Environment Variables
 `API_KEY` is the API key that will be used for authentication, if is not set, it will default to `123456`
 
 ## Program Arguments
-The server only takes 1 argument which is the port number. The default port is `8000`
+The server only takes 1 argument which is the port number. The default port is `8000` in our service example
+are passing the `8002` argument to start the server on port `8002`.
 
 The second part involves the postprocessing script that will run once the download is complete, there is a 
-sample script for sabnzbd, that will call this API passing the file to move, the mapping of the paths is on 
-that script, for other downloaders you can change the script to call this API.
+sample script for sabnzbd, the script is really simple, it uses urllib to avoid adding any dependencies
+and it takes sabnzbd arguments, checks if the ir a match in the categories we can process, and then makes
+the call to the api to do the actual move.
+
+## Screenshots
+
+![sabnzbd_add_file.png](sabnzbd_add_file.png)
+![sabnzbd_history.png](sabnzbd_history.png)

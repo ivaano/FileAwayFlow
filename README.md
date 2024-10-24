@@ -24,7 +24,7 @@ The api only has 2 endpoints:
 ````
 - `/api/files/move` endpoint to move files
 ```bash
-curl --request POST \
+> curl --request POST \
   --url http://localhost:8002/api/files/move \
   --header 'Content-Type: application/json' \
   --header 'X-API-KEY: 123456' \

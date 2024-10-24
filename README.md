@@ -11,6 +11,29 @@ so we will need to mount the (`/share/nas/isos`)  as part of the container which
 mountpoint inside the container and modify the Dockerfile. or we can use this API that runs on the host machine, and the postprocess script
 simply calls this API to do the moving.
 
+## Api Service
+The api only has 2 endpoints:
+
+- `/health` to check if the service is healthy
+```bash
+> curl http://localhost:8002/api/health
+{
+  "status": "success",
+  "message": "FileAwayFlow API is up and running"
+}
+````
+- `/api/files/move` endpoint to move files
+```bash
+curl --request POST \
+  --url http://localhost:8002/api/files/move \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: 123456' \
+  --data '{  
+  "sourcePath" : "/share/docker_volumes/sabnzbd/downloads/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr",  
+  "targetPath": "/share/nas/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr"  
+}'
+```
+
 ## Installation
 
 This project consists of two parts, the API and the postprocess script. 

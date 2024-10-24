@@ -57,18 +57,19 @@ async fn main() {
         .allow_header("content-type")
         .allow_header("X-API-KEY");
 
-    let file_move_route = warp::path!("api" / "files" / "move");
-    let health_checker = warp::path!("api" / "health")
+    let health_checker = warp::path("api")
+        .and(warp::path("health"))
         .and(warp::get())
         .and_then(handler::health_checker_handler);
-    
 
 
+    let file_move_route = warp::path!("api" / "files" / "move");
     let files_routes = file_move_route
         .and(key_validation())
         .and(warp::post())
         .and(warp::body::json())
-        .and_then(handler::handle_file_move);
+        .and_then(handler::handle_file_move)
+        .or(health_checker);
 
     let files_routes = files_routes.recover(handler::handle_rejection);
     

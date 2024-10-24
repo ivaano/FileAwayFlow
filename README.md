@@ -1,5 +1,6 @@
 ﻿## File Away Flow
-File Away Flow is an API that allows you to move files between folders, it is helpful for postprocessing files.
+File Away Flow is an API that allows you to move files between folders, it is helpful for postprocessing files,
+downloaded in containers like Sabnzbd, nzbget or Jdownloader.
 
 Consider the following scenario:
 ![diagram.png](diagram.png)

@@ -82,8 +82,6 @@ async fn main() {
         println!("WARNING!!!! Using default API Key: {}", *EXPECTED_API_KEY);
     }
     warp::serve(routes).run(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port_int as u16))).await;
-
-    //warp::serve(routes).run(([0, 0, 0, 0], port_int)).await;
 }
 
 #[derive(Debug)]

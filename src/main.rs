@@ -21,6 +21,10 @@ pub struct GenericResponse {
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.len() > 1 && args[1] == "--version" {
+        println!("Version {}", env!("CARGO_PKG_VERSION"));
+        std::process::exit(0);
+    }
     let default_port = "8000".to_string();
     let port = args.get(1).unwrap_or(&default_port);
     let port_int: i32 = match port.parse() {

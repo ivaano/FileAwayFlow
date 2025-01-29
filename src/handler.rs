@@ -1,4 +1,5 @@
-﻿use std::path::Path;
+﻿use std::fs;
+use std::path::Path;
 use warp::{http::StatusCode, reject, reply, reply::json, Reply};
 use crate::{ApiKeyError, GenericResponse, WebResult};
 use crate::model::FileMoveRequest;
@@ -53,8 +54,26 @@ pub async fn handle_file_move(file_move_request: FileMoveRequest) -> WebResult<i
         return Err(reject::custom(FileAlreadyExistsError));
     }
 
-    if let Err(err) = std::fs::rename(source_path, target_path) {
-        return Err(reject::custom(FileSystemError(format!("Failed to move file: {}", err))));
+    let move_result = match fs::rename(source_path, target_path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            if err.to_string().contains("invalid cross-device link") {
+                match fs::copy(source_path, target_path) {
+                    Ok(_) => {
+                        fs::remove_file(source_path)
+                    }
+                    Err(e) => Err(e),
+                }
+            } else {
+                Err(err)
+            }
+        }
+    };
+
+    if let Err(err) = move_result {
+        return Err(reject::custom(FileSystemError(
+            format!("Failed to move file: {}", err)
+        )));
     }
 
     let json_response = &GenericResponse {

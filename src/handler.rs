@@ -1,15 +1,16 @@
 ﻿use std::fs;
 use std::path::Path;
 use warp::{http::StatusCode, reject, reply, reply::json, Reply};
-use crate::{ApiKeyError, GenericResponse, WebResult};
+use crate::{ApiKeyError, GenericResponse, HealthResponse, WebResult};
 use crate::model::FileMoveRequest;
 
 
 pub async fn health_checker_handler() -> WebResult<impl Reply> {
-    const MESSAGE: &str = "FileAwayFlow API is up and running";
+    const MESSAGE: &str = "FileAwayFlow API is up and running.";
 
-    let response_json = &GenericResponse {
-        status: "success".to_string(),
+    let response_json = &HealthResponse {
+        status: "healthy".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
         message: MESSAGE.to_string(),
     };
     Ok(json(response_json))

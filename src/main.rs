@@ -16,6 +16,13 @@ pub struct GenericResponse {
     pub message: String,
 }
 
+#[derive(Serialize)]
+pub struct HealthResponse {
+    pub status: String,
+    pub version: String,
+    pub message: String,
+}
+
 
 
 #[tokio::main]
@@ -82,7 +89,7 @@ async fn main() {
         .with(warp::log("api"))
         .or(health_checker);
 
-    println!("🚀 Server started successfully, listening on port {}", port_int);
+    println!("🚀 FileAwayFlow v{} server started successfully, listening on port {}", env!("CARGO_PKG_VERSION"), port_int);
     if "123456" == *EXPECTED_API_KEY {
         println!("WARNING!!!! Using default API Key: {}", *EXPECTED_API_KEY);
     }

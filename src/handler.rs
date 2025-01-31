@@ -4,7 +4,6 @@ use warp::{http::StatusCode, reject, reply, reply::json, Reply};
 use crate::{ApiKeyError, GenericResponse, HealthResponse, WebResult};
 use crate::model::FileMoveRequest;
 
-
 pub async fn health_checker_handler() -> WebResult<impl Reply> {
     const MESSAGE: &str = "FileAwayFlow API is up and running.";
 
@@ -17,14 +16,13 @@ pub async fn health_checker_handler() -> WebResult<impl Reply> {
 }
 
 pub async fn handle_rejection(err: reject::Rejection) -> Result<reply::Response, warp::Rejection> {
-    if let Some(_) = err.find::<ApiKeyError>() {
+    if err.find::<ApiKeyError>().is_some() {
         let json_response = &GenericResponse {
             status: "error".to_string(),
             message: "Invalid API key".to_string(),
         };
         return Ok(reply::with_status(json(&json_response), StatusCode::FORBIDDEN).into_response());
     }
-
 
     if let Some(file_not_found_error) = err.find::<FileNotFoundError>().cloned() {
         let message = file_not_found_error.message();
@@ -35,21 +33,38 @@ pub async fn handle_rejection(err: reject::Rejection) -> Result<reply::Response,
         return Ok(reply::with_status(json(&json_response), StatusCode::BAD_REQUEST).into_response());
     }
 
+    if err.find::<FileAlreadyExistsError>().is_some() {
+        let json_response = &GenericResponse {
+            status: "error".to_string(),
+            message: "Target file already exists".to_string(),
+        };
+        return Ok(reply::with_status(json(&json_response), StatusCode::BAD_REQUEST).into_response());
+    }
+
+    if let Some(file_system_error) = err.find::<FileSystemError>().cloned() {
+        let json_response = &GenericResponse {
+            status: "error".to_string(),
+            message: file_system_error.message().to_string(),
+        };
+        return Ok(reply::with_status(json(&json_response), StatusCode::INTERNAL_SERVER_ERROR).into_response());
+    }
 
     let json_response = &GenericResponse {
         status: "error".to_string(),
-        message: format!("Unhandled rejection: {:?}", err).to_string(),
+        message: "Unhandled rejection".to_string(),
     };
-    Ok(reply::with_status(json(&json_response), StatusCode::BAD_REQUEST).into_response())
+    Ok(reply::with_status(json(&json_response), StatusCode::INTERNAL_SERVER_ERROR).into_response())
 }
-
 
 pub async fn handle_file_move(file_move_request: FileMoveRequest) -> WebResult<impl Reply> {
     let source_path = Path::new(&file_move_request.sourcePath);
     let target_path = Path::new(&file_move_request.targetPath);
 
     if !source_path.exists() {
-        return Err(reject::custom(FileNotFoundError(format!("File not found: {}", file_move_request.sourcePath))));
+        return Err(reject::custom(FileNotFoundError(format!(
+            "File not found: {}",
+            file_move_request.sourcePath
+        ))));
     }
 
     if target_path.exists() {
@@ -113,23 +128,23 @@ fn copy_dir_recursive(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::
     Ok(())
 }
 
-
 trait ErrorMessage {
     fn message(&self) -> &str;
 }
+
+#[derive(Debug, Clone)]
+pub struct FileNotFoundError(String);
+
+impl reject::Reject for FileNotFoundError {}
 
 impl ErrorMessage for FileNotFoundError {
     fn message(&self) -> &str {
         &self.0
     }
 }
-#[derive(Debug, Clone)]
-struct FileNotFoundError(String);
-
-impl reject::Reject for FileNotFoundError {}
 
 #[derive(Debug, Clone)]
-struct FileSystemError(String);
+pub struct FileSystemError(String);
 
 impl reject::Reject for FileSystemError {}
 
@@ -139,8 +154,7 @@ impl ErrorMessage for FileSystemError {
     }
 }
 
-
 #[derive(Debug)]
-struct FileAlreadyExistsError;
+pub struct FileAlreadyExistsError;
 
 impl reject::Reject for FileAlreadyExistsError {}

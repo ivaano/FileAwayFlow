@@ -109,6 +109,44 @@ pub async fn handle_file_move(file_move_request: FileMoveRequest) -> WebResult<i
     Ok(json(&json_response))
 }
 
+pub async fn handle_file_copy(file_copy_request: FileMoveRequest) -> WebResult<impl Reply> {
+    let source_path = Path::new(&file_copy_request.sourcePath);
+    let target_path = Path::new(&file_copy_request.targetPath);
+
+    if !source_path.exists() {
+        return Err(reject::custom(FileNotFoundError(format!(
+            "File not found: {}",
+            file_copy_request.sourcePath
+        ))));
+    }
+
+    if target_path.exists() {
+        return Err(reject::custom(FileAlreadyExistsError));
+    }
+
+    // Perform copy operation
+    if source_path.is_dir() {
+        if let Err(err) = copy_dir_recursive(source_path, target_path) {
+            return Err(reject::custom(FileSystemError(
+                format!("Failed to copy directory: {}", err)
+            )));
+        }
+    } else {
+        if let Err(err) = fs::copy(source_path, target_path) {
+            return Err(reject::custom(FileSystemError(
+                format!("Failed to copy file: {}", err)
+            )));
+        }
+    }
+
+    let json_response = &GenericResponse {
+        status: "success".to_string(),
+        message: format!("File {} copied successfully", file_copy_request.sourcePath).to_string(),
+    };
+
+    Ok(json(&json_response))
+}
+
 fn copy_dir_recursive(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
     fs::create_dir_all(&dst)?;
 

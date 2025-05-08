@@ -24,11 +24,22 @@ pub fn key_validation() -> impl Filter<Extract = (), Error = Rejection> + Copy {
 
 pub fn files_routes() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone + warp::Filter {
     let file_move_route = warp::path!("api" / "files" / "move");
-    let routes = file_move_route
+    let file_copy_route = warp::path!("api" / "files" / "copy");
+
+    let move_route = file_move_route
         .and(key_validation())
         .and(warp::post())
         .and(warp::body::json())
-        .and_then(handler::handle_file_move)
+        .and_then(handler::handle_file_move);
+
+    let copy_route = file_copy_route
+        .and(key_validation())
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(handler::handle_file_copy);
+
+    let routes = move_route
+        .or(copy_route)
         .or(health_checker());
 
     routes.recover(handler::handle_rejection)

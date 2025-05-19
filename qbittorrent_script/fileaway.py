@@ -37,7 +37,7 @@ def make_post_request(url, data):
         print("Unknown Error:", e)
 
 
-def move_file_category(source_path, target_path):
+def copy_file(source_path, target_path):
         make_post_request("{}/api/files/copy".format(HOST), json.dumps({"sourcePath": source_path, "targetPath": target_path}))
 
 
@@ -68,4 +68,4 @@ if __name__ == "__main__":
         target = list(map.values())[0] + "/" + torrent_name
         print("Source:", source)
         print("Target:", target)
-        move_file_category(source, target)
+        copy_file(source, target)

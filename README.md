@@ -12,7 +12,7 @@ mountpoint inside the container and modify the Dockerfile. or we can use this AP
 simply calls this API to do the moving.
 
 ## Api Service
-The api only has 2 endpoints:
+The api only has 3 endpoints:
 
 - `/health` to check if the service is healthy
 ```bash
@@ -37,6 +37,22 @@ The api only has 2 endpoints:
   "message": "File /share/docker_volumes/sabnzbd/downloads/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr moved successfully"
 }
 ```
+- `/api/files/copy` endpoint to copy files
+```bash
+> curl --request POST \
+  --url http://localhost:8002/api/files/copy \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: 123456' \
+  --data '{  
+  "sourcePath" : "/share/docker_volumes/sabnzbd/downloads/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr",  
+  "targetPath": "/share/nas/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr"  
+}'
+{
+  "status": "success",
+  "message": "File /share/docker_volumes/sabnzbd/downloads/iso/Debian_wheezy_7.2.0__64-bit_installer_iso_for_CD_or_USB_flash_dr copied successfully"
+}
+```
+
 
 ## Installation
 
@@ -113,11 +129,14 @@ The server only takes 1 argument which is the port number. The default port is `
 are passing the `8002` argument to start the server on port `8002`.
 
 The second part involves the postprocessing script that will run once the download is complete, there is a 
-sample script for sabnzbd, the script is really simple, it uses urllib to avoid adding any dependencies
-and it takes sabnzbd arguments, checks if the ir a match in the categories we can process, and then makes
+sample script for sabnzbd and qbittorrent, the script is really simple, it uses urllib to avoid adding any dependencies
+and it takes sabnzbd/qbittorrent arguments, checks if there is a match in the categories we can process, and then makes
 the call to the api to do the actual move.
 
 ## Screenshots
 
 ![sabnzbd_add_file.png](sabnzbd_add_file.png)
 ![sabnzbd_history.png](sabnzbd_history.png)
+
+## Qbittorrent Options
+![qbittorrent_options.png](qbittorrent_options.png)

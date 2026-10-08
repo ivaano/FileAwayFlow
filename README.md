@@ -60,16 +60,105 @@ This project consists of two parts, the API and the postprocess script.
 
 to build the API you need to install rust and cargo (https://www.rust-lang.org/tools/install).
 ```bash
-cargo build --color=always --profile release --package FileAwayFlow --bin FileAwayFlow
+cargo build --locked --release --bin file_away_flow
   Finished `release` profile [optimized] target(s) in 2.02s
 ```
 
-The binary should be in the `target/release` directory, copy the binary file to `/usr/local/bin/fileawayflow`
+The binary is `target/release/file_away_flow`; copy it to `/usr/local/bin/fileawayflow`.
 the api can be run by any user, just make sure the user has the proper permissions to manipulate the files.
 
 Alternatively if you don't want to build it I've provided a binary for linux-x64 as a release asset https://github.com/ivaano/FileAwayFlow/releases.
 Tested only on debian 12, but it should work fine on any x64 linux distro.
 
+
+### Package a Linux x64 release
+
+Run this in a Linux build environment with Python 3.11 or newer, Cargo/Rust,
+the `x86_64-unknown-linux-gnu` Rust target, and a compatible linker
+installed. The script does not install dependencies.
+
+```bash
+./scripts/release.py 1.1.0
+```
+
+The script works from any directory when invoked by its path. It builds the
+`file_away_flow` binary with locked dependencies, optimization level 3, thin LTO,
+one codegen unit, and stripped symbols, using the repository's `target/` directory.
+It creates `dist/fileawayflow-1.1.0-linux-x64.tar.gz` with this layout:
+
+```text
+fileawayflow-1.1.0-linux-x64/
+├── fileawayflow
+└── examples/
+    └── fileaway.service
+```
+
+Without `--publish`, the version argument names the package only; it does not change Cargo metadata
+or the binary's embedded version. It must begin with a letter or digit and contain
+only letters, digits, `.`, `_`, `+`, or `-`. Existing archives are never overwritten.
+The archive targets GNU/glibc Linux x64.
+
+#### Publish to GitHub
+
+```bash
+./scripts/release.py 1.2.0 --publish
+```
+
+Publishing also requires Git and the GitHub CLI (`gh`).
+Authenticate with `gh auth login`, configure your Git author name/email, and
+ensure both Git push access to `origin` and GitHub token permissions to write
+repository contents/releases and create/merge pull requests. The script checks
+authentication and repository write access and dry-runs a Git push; individual
+token permissions or repository rules can still reject later operations.
+
+The version must be SemVer without a leading `v`; the tag is `vVERSION`.
+Prerelease versions create prereleases. Publishing requires a clean working tree
+and builds remote `origin/main`, so merge your application and packaging changes
+into `main` first. Your current branch is preserved. Existing archives, version
+branches, tags, and releases are never overwritten.
+
+For a newer version, the script creates `release/vVERSION` from `main`, changes
+only the application version in Cargo.toml and Cargo.lock, runs locked tests and
+the optimized build, then commits, pushes, and opens a version-bump PR. It requests
+a squash merge using the expected PR head commit. It does not approve its own PR
+or bypass repository rules. If reviews or checks block merging, it stops with the
+PR URL. If `main` already has the requested version and it is untagged, the bump
+branch and PR are skipped. Older versions and changes only to build metadata are
+rejected (the exact current version is allowed).
+
+The script tests and builds the exact merged commit (or the fetched `main` commit
+when no bump is needed), verifies the embedded version, packages it, then pushes
+an annotated tag. GitHub-generated notes summarize changes since the nearest
+preceding SemVer tag in that commit's history. It creates a draft release with
+the archive, verifies the asset is present, then publishes it and prints its URL.
+
+On failure, temporary worktrees and staging are cleaned up, while completed
+archives and remote changes are preserved. The script prints recovery commands
+and the PR/tag/release details that exist. After a blocked merge, inspect and merge
+the existing PR; rerunning with that version is rejected while its version branch
+exists, so remove its local and remote version branches only after confirming the merge. A subsequent run
+can then use the matching-version path if no archive/tag/release already exists.
+After a tag has been pushed, do not rerun the script: inspect the release with
+`gh release view vVERSION --repo OWNER/REPO`. If no release exists, create a draft:
+
+```bash
+gh release create vVERSION dist/fileawayflow-VERSION-linux-x64.tar.gz \
+  --repo OWNER/REPO --verify-tag --draft --generate-notes
+```
+
+Add `--notes-start-tag vPREVIOUS` when applicable. If a draft exists, upload a missing
+asset with `gh release upload vVERSION ARCHIVE --repo OWNER/REPO`.
+Verify the archive and notes, mark prereleases with `--prerelease`, then publish
+using `gh release edit vVERSION --repo OWNER/REPO --draft=false`.
+
+Run publishing tests without contacting GitHub using
+`python3 scripts/tests/test_release.py`.
+
+After extracting, copy `fileawayflow` to `/usr/local/bin/fileawayflow`. Customize
+`examples/fileaway.service` (also available as `scripts/packaging/fileaway.service`) before
+installing it at `/etc/systemd/system/fileaway.service`: set `User` and `Group` to
+an account with access to your files, replace the example `API_KEY=secret`, and
+adjust the executable path and port `8002` as needed.
 
 ### Create a system service to start the API on boot:
 Location:

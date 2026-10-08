@@ -1,0 +1,18 @@
+[Unit]
+Description=API to move files around.
+After=syslog.target network.target
+
+[Service]
+User=ivan
+Group=ivan
+UMask=0002
+Type=simple
+Environment="API_KEY=secret"
+ExecStart=/usr/local/bin/fileawayflow 8002
+TimeoutStopSec=10
+KillMode=process
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target
